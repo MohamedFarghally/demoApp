@@ -1,70 +1,72 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Container, Card, Button, Form, Row, Col } from 'react-bootstrap';
 import api from '../services/api';
 
 const ProjectDetail = () => {
   const { id } = useParams();
-  const [project, setProject] = useState(null);
-  const [donations, setDonations] = useState([]);
+  const navigate = useNavigate();
+  const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
-  const [form, setForm] = useState({
+  const [formError, setFormError] = useState('');
+  const [formSuccess, setFormSuccess] = useState('');
+  const [treatmentNote, setTreatmentNote] = useState({
     amount: '',
     donor_name: '',
     message: ''
   });
 
-  const loadProject = async () => {
-    try {
-      const [projectRes, donationsRes] = await Promise.all([
-        api.get(`/projects/${id}`),
-        api.get('/donations')
-      ]);
-      setProject(projectRes.data);
-      setDonations(donationsRes.data.filter((donation) => donation.project_id === Number(id)));
-    } catch (error) {
-      console.error('Error loading project: ', error);
-      setProject(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadProject();
+    const fetchPatient = async () => {
+      try {
+        const res = await api.get(`/projects/${id}`);
+        setPatient(res.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching patient: ', error);
+        setLoading(false);
+      }
+    };
+
+    fetchPatient();
   }, [id]);
 
-  const handleDonation = async (event) => {
+  const handleAddTreatment = async (event) => {
     event.preventDefault();
-    setMessage({ type: '', text: '' });
+    setFormError('');
+    setFormSuccess('');
 
-    if (!form.amount || !form.donor_name) {
-      setMessage({ type: 'danger', text: 'Please provide your name and donation amount.' });
+    const costValue = Number(treatmentNote.amount);
+    if (Number.isNaN(costValue) || costValue < 0) {
+      setFormError('Please enter a valid treatment cost.');
       return;
     }
 
-    const amountValue = Number(form.amount);
-    if (Number.isNaN(amountValue) || amountValue <= 0) {
-      setMessage({ type: 'danger', text: 'Amount must be a positive number.' });
+    if (!treatmentNote.donor_name) {
+      setFormError('Please enter the doctor name.');
       return;
     }
 
     try {
       setSubmitting(true);
-      await api.post('/donations', {
-        project_id: Number(id),
-        amount: amountValue,
-        donor_name: form.donor_name,
-        message: form.message
-      });
-      setForm({ amount: '', donor_name: '', message: '' });
-      setMessage({ type: 'success', text: 'Donation submitted. Thank you!' });
-      await loadProject();
+      const payload = {
+        project_id: parseInt(id),
+        amount: costValue,
+        donor_name: treatmentNote.donor_name,
+        message: treatmentNote.message
+      };
+      await api.post('/donations', payload);
+      
+      // Refresh patient data
+      const res = await api.get(`/projects/${id}`);
+      setPatient(res.data);
+      
+      setTreatmentNote({ amount: '', donor_name: '', message: '' });
+      setFormSuccess('Treatment record added successfully!');
     } catch (error) {
-      console.error('Error submitting donation: ', error);
-      setMessage({ type: 'danger', text: 'Could not submit donation.' });
+      console.error('Error adding treatment: ', error);
+      setFormError('Could not add treatment record. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -73,17 +75,19 @@ const ProjectDetail = () => {
   if (loading) {
     return (
       <Container className="py-5 text-center">
-        <div className="spinner-border" role="status" />
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
       </Container>
     );
   }
 
-  if (!project) {
+  if (!patient) {
     return (
-      <Container className="py-5 text-center">
-        <h2 className="fw-bold">Project not found</h2>
-        <Button as={Link} to="/projects" variant="outline-primary" className="mt-3">
-          Back to Projects
+      <Container className="py-5">
+        <h2 className="fw-bold">Patient not found</h2>
+        <Button variant="primary" onClick={() => navigate('/projects')}>
+          Back to Patients
         </Button>
       </Container>
     );
@@ -91,93 +95,100 @@ const ProjectDetail = () => {
 
   return (
     <Container className="py-4">
-      <Row className="g-4 align-items-start">
-        <Col lg={8}>
-          <Card className="border-0 shadow-sm">
-            <Card.Body>
-              <div className="d-flex flex-wrap justify-content-between gap-3">
-                <div>
-                  <h1 className="fw-bold">{project.title}</h1>
-                  <p className="text-muted">{project.location}</p>
-                </div>
-                <span className="badge-soft">{project.category}</span>
+      <Button variant="outline-secondary" className="mb-4" onClick={() => navigate('/projects')}>
+        ← Back to Patients
+      </Button>
+
+      <Row>
+        <Col md={8}>
+          <Card className="mb-4 border-primary">
+            <Card.Header className="bg-primary text-white">
+              <div className="d-flex justify-content-between align-items-center">
+                <h3 className="mb-0">Patient Record</h3>
+                <span className="badge bg-light text-primary">MRN-{String(patient.id).padStart(6, '0')}</span>
               </div>
-              <p className="mt-3 text-muted">{project.description}</p>
+            </Card.Header>
+            <Card.Body>
+              <h2 className="fw-bold mb-3">{patient.title}</h2>
+              <p className="text-muted mb-4">
+                <strong>Department:</strong> {patient.category} | <strong>Location:</strong> {patient.location}
+              </p>
+              
+              <Row className="mb-4">
+                <Col md={6}>
+                  <p><strong>Age:</strong> {Math.floor(patient.goal)} years</p>
+                  <p><strong>Status:</strong> {patient.progress < 100 ? 'Under Treatment' : 'Treatment Complete'}</p>
+                </Col>
+                <Col md={6}>
+                  <p><strong>Admission Date:</strong> {new Date(patient.created_at).toLocaleDateString()}</p>
+                  <p><strong>Treatment Progress:</strong> {patient.progress.toFixed(0)}%</p>
+                </Col>
+              </Row>
+              
+              <div className="bg-light p-3 rounded">
+                <h5 className="fw-bold">Medical Condition</h5>
+                <p className="mb-0">{patient.description}</p>
+              </div>
+              
               <div className="mt-4">
-                <div className="d-flex justify-content-between">
-                  <span className="text-muted">Goal: ${project.goal.toLocaleString()}</span>
-                  <span className="fw-bold">{project.progress.toFixed(1)}% funded</span>
-                </div>
-                <div className="progress mt-2">
+                <div className="progress" style={{ height: '8px' }}>
                   <div
                     className="progress-bar bg-success"
                     role="progressbar"
-                    style={{ width: `${project.progress}%` }}
-                  />
+                    style={{ width: `${patient.progress}%` }}
+                  ></div>
                 </div>
               </div>
-            </Card.Body>
-          </Card>
-
-          <Card className="border-0 shadow-sm mt-4">
-            <Card.Body>
-              <Card.Title className="fw-bold">Latest Donations</Card.Title>
-              {donations.length === 0 ? (
-                <div className="text-muted mt-3">No donations for this project yet.</div>
-              ) : (
-                <ul className="list-unstyled mt-3">
-                  {donations.slice(0, 5).map((donation) => (
-                    <li key={donation.id} className="mb-2">
-                      <strong>{donation.donor_name}</strong> donated ${donation.amount.toFixed(2)}
-                      {donation.message ? ` — ${donation.message}` : ''}
-                    </li>
-                  ))}
-                </ul>
-              )}
             </Card.Body>
           </Card>
         </Col>
 
-        <Col lg={4}>
-          <Card className="border-0 shadow-sm bg-soft">
+        <Col md={4}>
+          <Card>
+            <Card.Header className="bg-success text-white">
+              <h5 className="mb-0">Add Treatment Record</h5>
+            </Card.Header>
             <Card.Body>
-              <Card.Title className="fw-bold">Support This Project</Card.Title>
-              <Form className="mt-3" onSubmit={handleDonation}>
+              <Form onSubmit={handleAddTreatment}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Amount (USD) *</Form.Label>
+                  <Form.Label>Treatment Cost ($)</Form.Label>
                   <Form.Control
                     type="number"
-                    min="1"
-                    step="1"
-                    value={form.amount}
-                    onChange={(event) => setForm({ ...form, amount: event.target.value })}
-                    placeholder="50"
+                    min="0"
+                    step="0.01"
+                    placeholder="150.00"
+                    value={treatmentNote.amount}
+                    onChange={(e) => setTreatmentNote({ ...treatmentNote, amount: e.target.value })}
                   />
                 </Form.Group>
+
                 <Form.Group className="mb-3">
-                  <Form.Label>Your Name *</Form.Label>
+                  <Form.Label>Doctor Name</Form.Label>
                   <Form.Control
-                    value={form.donor_name}
-                    onChange={(event) => setForm({ ...form, donor_name: event.target.value })}
-                    placeholder="Full name"
+                    type="text"
+                    placeholder="Dr. Smith"
+                    value={treatmentNote.donor_name}
+                    onChange={(e) => setTreatmentNote({ ...treatmentNote, donor_name: e.target.value })}
                   />
                 </Form.Group>
+
                 <Form.Group className="mb-3">
-                  <Form.Label>Message</Form.Label>
+                  <Form.Label>Treatment Notes</Form.Label>
                   <Form.Control
                     as="textarea"
                     rows={3}
-                    value={form.message}
-                    onChange={(event) => setForm({ ...form, message: event.target.value })}
-                    placeholder="Optional message"
+                    placeholder="Enter treatment details, medications prescribed, test results..."
+                    value={treatmentNote.message}
+                    onChange={(e) => setTreatmentNote({ ...treatmentNote, message: e.target.value })}
                   />
                 </Form.Group>
-                <Button type="submit" variant="primary" disabled={submitting}>
-                  {submitting ? 'Submitting...' : 'Donate'}
+
+                <Button type="submit" variant="success" className="w-100" disabled={submitting}>
+                  {submitting ? 'Saving...' : 'Add Treatment Record'}
                 </Button>
-                {message.text && (
-                  <div className={`mt-3 text-${message.type}`}>{message.text}</div>
-                )}
+
+                {formError && <p className="text-danger mt-2">{formError}</p>}
+                {formSuccess && <p className="text-success mt-2">{formSuccess}</p>}
               </Form>
             </Card.Body>
           </Card>

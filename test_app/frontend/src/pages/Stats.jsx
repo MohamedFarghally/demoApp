@@ -40,8 +40,8 @@ const Stats = () => {
   return (
     <Container className="py-4">
       <div className="text-center mb-5">
-        <h1 className="display-5 fw-bold">Impact Snapshot</h1>
-        <p className="text-muted">Real-time totals from the Hack4Humanity community.</p>
+        <h1 className="display-5 fw-bold">Hospital Analytics</h1>
+        <p className="text-muted">Real-time metrics from MediCare Portal.</p>
       </div>
 
       <Row className="g-4">
@@ -51,7 +51,7 @@ const Stats = () => {
               <Card.Title className="display-6 fw-bold text-primary">
                 {stats.total_projects}
               </Card.Title>
-              <Card.Text className="text-muted">Total Projects</Card.Text>
+              <Card.Text className="text-muted">Total Patients</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -61,7 +61,7 @@ const Stats = () => {
               <Card.Title className="display-6 fw-bold text-success">
                 ${stats.total_amount_raised.toLocaleString()}
               </Card.Title>
-              <Card.Text className="text-muted">Total Raised</Card.Text>
+              <Card.Text className="text-muted">Treatment Value ($)</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -71,7 +71,7 @@ const Stats = () => {
               <Card.Title className="display-6 fw-bold text-warning">
                 {stats.total_volunteers}
               </Card.Title>
-              <Card.Text className="text-muted">Volunteers</Card.Text>
+              <Card.Text className="text-muted">Appointments</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -84,7 +84,7 @@ const Stats = () => {
               <Card.Title className="display-6 fw-bold text-info">
                 {stats.total_donations}
               </Card.Title>
-              <Card.Text className="text-muted">Donations</Card.Text>
+              <Card.Text className="text-muted">Medical Records</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -94,7 +94,7 @@ const Stats = () => {
               <Card.Title className="display-6 fw-bold text-primary">
                 {stats.active_projects}
               </Card.Title>
-              <Card.Text className="text-muted">Active Projects</Card.Text>
+              <Card.Text className="text-muted">Active Cases</Card.Text>
             </Card.Body>
           </Card>
         </Col>
@@ -104,7 +104,7 @@ const Stats = () => {
               <Card.Title className="display-6 fw-bold text-success">
                 {stats.completed_projects}
               </Card.Title>
-              <Card.Text className="text-muted">Completed Projects</Card.Text>
+              <Card.Text className="text-muted">Completed Treatments</Card.Text>
             </Card.Body>
           </Card>
         </Col>

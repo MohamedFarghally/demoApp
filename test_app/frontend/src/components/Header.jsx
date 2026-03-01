@@ -6,11 +6,11 @@ const Header = () => {
   const location = useLocation();
   
   const navItems = [
-    { name: "Home", path: "/" },
-    { name: "Projects", path: "/projects" },
-    { name: "Donations", path: "/donations" },
-    { name: "Volunteers", path: "/volunteers" },
-    { name: "Stats", path: "/stats" }
+    { name: "Dashboard", path: "/" },
+    { name: "Patients", path: "/projects" },
+    { name: "Records", path: "/donations" },
+    { name: "Appointments", path: "/volunteers" },
+    { name: "Analytics", path: "/stats" }
   ];
 
   return (
@@ -18,8 +18,8 @@ const Header = () => {
       <Container>
         <Navbar.Brand as={Link} to="/">
           <span className="brand-text">
-            <i className="fas fa-hands-helping"></i>
-            Hack4Humanity
+            <i className="fas fa-hospital"></i>
+            MediCare Portal
           </span>
         </Navbar.Brand>
         

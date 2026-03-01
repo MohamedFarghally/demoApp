@@ -1,197 +1,120 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
-  const [stats, setStats] = useState(null);
-  const [featuredProjects, setFeaturedProjects] = useState([]);
-  
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, projectsRes] = await Promise.all([
-          api.get("/stats"),
-          api.get("/projects")
-        ]);
-        
-        setStats(statsRes.data);
-        setFeaturedProjects(projectsRes.data.slice(0, 3));
-      } catch (error) {
-        console.error('Error fetching data: ', error);
-      }
-    };
-    
-    fetchData();
-  }, []);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const navigate = useNavigate();
 
   return (
-    <Container className="py-4">
-      <div className="text-center mb-5">
-        <h1 className="display-4 fw-bold mb-4">
-          Hack4Humanity
-        </h1>
-        <h2 className="text-muted mb-4">
-          Connecting Communities with Impact
-        </h2>
-        <Button variant="primary" size="lg" href="/projects">
-          Explore Projects
-        </Button>
-      </div>
-      
-      {stats && (
-        <div className="mb-5">
-          <Row className="g-4">
-            <Col md={3}>
-              <Card className="text-center h-100 border-0 shadow-sm">
-                <Card.Body>
-                  <Card.Title className="display-4 fw-bold text-primary">
-                    {stats.total_projects}
-                  </Card.Title>
-                  <Card.Text className="text-muted">
-                    Total Projects
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-            
-            <Col md={3}>
-              <Card className="text-center h-100 border-0 shadow-sm">
-                <Card.Body>
-                  <Card.Title className="display-4 fw-bold text-success">
-                    {formatCurrency(stats.total_amount_raised)}
-                  </Card.Title>
-                  <Card.Text className="text-muted">
-                    Donated
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-            
-            <Col md={3}>
-              <Card className="text-center h-100 border-0 shadow-sm">
-                <Card.Body>
-                  <Card.Title className="display-4 fw-bold text-info">
-                    {stats.total_volunteers}
-                  </Card.Title>
-                  <Card.Text className="text-muted">
-                    Volunteers
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-            
-            <Col md={3}>
-              <Card className="text-center h-100 border-0 shadow-sm">
-                <Card.Body>
-                  <Card.Title className="display-4 fw-bold text-warning">
-                    {stats.active_projects}
-                  </Card.Title>
-                  <Card.Text className="text-muted">
-                    Active Projects
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
+    <Container className="py-5">
+      {/* Hero Section */}
+      <div className="text-center mb-5 py-5">
+        <div className="mb-4">
+          <i className="fas fa-hospital-alt fa-5x text-primary"></i>
         </div>
-      )}
-      
-      <div className="text-center mb-5">
-        <h2 className="display-5 fw-bold mb-4">
-          Featured Projects
-        </h2>
-        <Button variant="outline-primary" size="sm" href="/projects">
-          View All Projects
-        </Button>
+        <h1 className="display-3 fw-bold mb-3">
+          MediCare Portal
+        </h1>
+        <p className="lead text-muted mb-4">
+          Comprehensive Patient Management System for Modern Healthcare
+        </p>
+        <div className="d-flex justify-content-center gap-3">
+          <Button variant="primary" size="lg" onClick={() => navigate('/projects')}>
+            <i className="fas fa-user-plus me-2"></i>
+            Register Patient
+          </Button>
+          <Button variant="outline-primary" size="lg" onClick={() => navigate('/projects')}>
+            View Patients
+          </Button>
+        </div>
       </div>
-      
-      <Row className="g-4">
-        {featuredProjects.map((project) => (
-          <Col md={4} key={project.id}>
-            <Card className="h-100">
-              <Card.Body>
-                <Card.Title className="h5 fw-bold">
-                  {project.title}
-                </Card.Title>
-                <Card.Text className="text-muted mb-2">
-                  {project.description.substring(0, 100)}...
-                </Card.Text>
-                <div className="d-flex justify-content-between align-items-center">
-                  <span className="text-muted">
-                    {project.category}
-                  </span>
-                  <Button 
-                    variant="outline-primary" 
-                    size="sm" 
-                    href={`/projects/${project.id}`}
-                  >
-                    Learn More
-                  </Button>
-                </div>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
+
+      {/* Quick Access Cards */}
+      <Row className="g-4 mb-5">
+        <Col md={4}>
+          <Card className="h-100 border-0 shadow-sm text-center hover-card">
+            <Card.Body className="p-4">
+              <div className="mb-3">
+                <i className="fas fa-user-injured fa-3x text-primary"></i>
+              </div>
+              <h4 className="fw-bold mb-2">Patient Registration</h4>
+              <p className="text-muted mb-3">
+                Register new patients and manage their medical records
+              </p>
+              <Button variant="primary" onClick={() => navigate('/projects')} className="w-100">
+                Go to Registration
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
+        
+        <Col md={4}>
+          <Card className="h-100 border-0 shadow-sm text-center hover-card">
+            <Card.Body className="p-4">
+              <div className="mb-3">
+                <i className="fas fa-file-medical fa-3x text-success"></i>
+              </div>
+              <h4 className="fw-bold mb-2">Medical Records</h4>
+              <p className="text-muted mb-3">
+                Access and update patient medical history and treatments
+              </p>
+              <Button variant="success" onClick={() => navigate('/donations')} className="w-100">
+                View Records
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
+        
+        <Col md={4}>
+          <Card className="h-100 border-0 shadow-sm text-center hover-card">
+            <Card.Body className="p-4">
+              <div className="mb-3">
+                <i className="fas fa-calendar-alt fa-3x text-info"></i>
+              </div>
+              <h4 className="fw-bold mb-2">Appointments</h4>
+              <p className="text-muted mb-3">
+                Schedule and manage patient appointments and visits
+              </p>
+              <Button variant="info" onClick={() => navigate('/volunteers')} className="w-100 text-white">
+                Schedule Visit
+              </Button>
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
-      
-      <div className="text-center mt-5 pt-5 border-top">
-        <h2 className="display-5 fw-bold mb-4">
-          Make a Difference Today
-        </h2>
-        <Row className="g-4">
-          <Col md={4}>
-            <Card className="h-100 border-0 shadow-sm">
-              <Card.Body className="text-center">
-                <div className="mb-3">
-                  <i className="fas fa-hand-holding-heart fa-3x text-primary"></i>
-                </div>
-                <h4 className="fw-bold">Donate</h4>
-                <p className="text-muted">
-                  Support projects that matter to you
-                </p>
-                <Button variant="primary" href="/donations">Donate Now</Button>
-              </Card.Body>
-            </Card>
-          </Col>
-          
-          <Col md={4}>
-            <Card className="h-100 border-0 shadow-sm">
-              <Card.Body className="text-center">
-                <div className="mb-3">
-                  <i className="fas fa-users fa-3x text-success"></i>
-                </div>
-                <h4 className="fw-bold">Volunteer</h4>
-                <p className="text-muted">
-                  Give your time and skills
-                </p>
-                <Button variant="success" href="/volunteers">Volunteer</Button>
-              </Card.Body>
-            </Card>
-          </Col>
-          
-          <Col md={4}>
-            <Card className="h-100 border-0 shadow-sm">
-              <Card.Body className="text-center">
-                <div className="mb-3">
-                  <i className="fas fa-project-diagram fa-3x text-info"></i>
-                </div>
-                <h4 className="fw-bold">Start Project</h4>
-                <p className="text-muted">
-                  Launch your own initiative
-                </p>
-                <Button variant="info" href="/projects">Start Now</Button>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </div>
+
+      {/* Info Section */}
+      <Row className="g-4">
+        <Col md={6}>
+          <Card className="border-0 bg-light h-100">
+            <Card.Body className="p-4">
+              <h5 className="fw-bold mb-3">
+                <i className="fas fa-shield-alt text-primary me-2"></i>
+                Secure & Compliant
+              </h5>
+              <p className="text-muted mb-0">
+                Patient data is handled with the highest security standards. 
+                Our system ensures HIPAA compliance and data protection for all medical records.
+              </p>
+            </Card.Body>
+          </Card>
+        </Col>
+        
+        <Col md={6}>
+          <Card className="border-0 bg-light h-100">
+            <Card.Body className="p-4">
+              <h5 className="fw-bold mb-3">
+                <i className="fas fa-clock text-primary me-2"></i>
+                24/7 Access
+              </h5>
+              <p className="text-muted mb-0">
+                Access patient records anytime, anywhere. Our portal is always available 
+                for authorized medical staff to provide continuous patient care.
+              </p>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </Container>
   );
 };

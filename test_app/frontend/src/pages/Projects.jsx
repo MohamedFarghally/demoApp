@@ -1,95 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 const Projects = () => {
-  const [projects, setProjects] = useState([]);
+  const navigate = useNavigate();
+  const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedDepartment, setSelectedDepartment] = useState('All');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
-  const [newProject, setNewProject] = useState({
+  const [newPatient, setNewPatient] = useState({
     title: '',
     description: '',
-    category: 'Environment',
+    category: 'General Medicine',
     goal: '',
     progress: 0,
     location: ''
   });
   
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchPatients = async () => {
       try {
         const res = await api.get("/projects");
-        setProjects(res.data);
+        setPatients(res.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching projects: ', error);
+        console.error('Error fetching patients: ', error);
         setLoading(false);
       }
     };
     
-    fetchProjects();
+    fetchPatients();
   }, []);
 
-  const categories = [
-    'All', 'Environment', 'Education', 'Food Security', 
-    'Health', 'Technology', 'Community Development'
+  const departments = [
+    'All', 'General Medicine', 'Cardiology', 'Pediatrics', 'Orthopedics', 
+    'Neurology', 'Oncology', 'Emergency', 'Radiology', 'Surgery'
   ];
 
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || project.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const filteredPatients = patients.filter(patient => {
+    const matchesSearch = patient.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         patient.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment = selectedDepartment === 'All' || patient.category === selectedDepartment;
+    return matchesSearch && matchesDepartment;
   });
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const handleCreateProject = async (event) => {
+  const handleRegisterPatient = async (event) => {
     event.preventDefault();
     setFormError('');
     setFormSuccess('');
 
-    if (!newProject.title || !newProject.description || !newProject.location || !newProject.goal) {
-      setFormError('Please fill in the required fields.');
+    if (!newPatient.title || !newPatient.description || !newPatient.location || !newPatient.goal) {
+      setFormError('Please fill in all required fields.');
       return;
     }
 
-    const goalValue = Number(newProject.goal);
-    if (Number.isNaN(goalValue) || goalValue <= 0) {
-      setFormError('Goal must be a positive number.');
+    const ageValue = Number(newPatient.goal);
+    if (Number.isNaN(ageValue) || ageValue <= 0 || ageValue > 120) {
+      setFormError('Please enter a valid age (1-120).');
       return;
     }
 
     try {
       setSubmitting(true);
       const payload = {
-        ...newProject,
-        goal: goalValue,
-        progress: Number(newProject.progress) || 0
+        ...newPatient,
+        goal: ageValue,
+        progress: Number(newPatient.progress) || 0
       };
       const res = await api.post('/projects', payload);
-      setProjects((prev) => [res.data, ...prev]);
-      setNewProject({
+      setPatients((prev) => [res.data, ...prev]);
+      setNewPatient({
         title: '',
         description: '',
-        category: 'Environment',
+        category: 'General Medicine',
         goal: '',
         progress: 0,
         location: ''
       });
-      setFormSuccess('Project created successfully.');
+      setFormSuccess('Patient registered successfully. Medical Record Number: MRN-' + String(res.data.id).padStart(6, '0'));
     } catch (error) {
-      console.error('Error creating project: ', error);
-      setFormError('Could not create project. Please try again.');
+      console.error('Error registering patient: ', error);
+      setFormError('Could not register patient. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -99,10 +94,10 @@ const Projects = () => {
     <Container className="py-4">
       <div className="text-center mb-5">
         <h1 className="display-4 fw-bold mb-4">
-          Community Projects
+          Patient Registration
         </h1>
         <p className="lead text-muted">
-          Browse and support initiatives making a real difference in communities worldwide
+          Register new patients and manage existing records
         </p>
       </div>
       
@@ -111,7 +106,7 @@ const Projects = () => {
           <Col md={6}>
             <Form.Control
               type="search"
-              placeholder="Search projects..."
+              placeholder="Search patients by name or condition..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="me-2"
@@ -120,12 +115,12 @@ const Projects = () => {
           
           <Col md={4}>
             <Form.Select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
             >
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
                 </option>
               ))}
             </Form.Select>
@@ -133,82 +128,86 @@ const Projects = () => {
           
           <Col md={2}>
             <Button variant="outline-primary" size="sm" disabled={loading}>
-              {loading ? 'Loading...' : 'Filter'}
+              {loading ? 'Loading...' : 'Search'}
             </Button>
           </Col>
         </Row>
       </div>
 
-      <Card className="mb-5 border-0 shadow-sm bg-soft">
+      <Card className="mb-5 border-0 shadow-sm bg-light">
         <Card.Body>
-          <Card.Title className="fw-bold mb-3">Start a New Project</Card.Title>
-          <Form onSubmit={handleCreateProject}>
+          <Card.Title className="fw-bold mb-3">
+            <i className="fas fa-user-plus me-2"></i>
+            New Patient Registration
+          </Card.Title>
+          <Form onSubmit={handleRegisterPatient}>
             <Row className="g-3">
               <Col md={6}>
-                <Form.Label>Title *</Form.Label>
+                <Form.Label>Full Name *</Form.Label>
                 <Form.Control
-                  value={newProject.title}
-                  onChange={(event) => setNewProject({ ...newProject, title: event.target.value })}
-                  placeholder="Project title"
+                  value={newPatient.title}
+                  onChange={(event) => setNewPatient({ ...newPatient, title: event.target.value })}
+                  placeholder="John Doe"
                 />
               </Col>
-              <Col md={6}>
-                <Form.Label>Location *</Form.Label>
+              <Col md={3}>
+                <Form.Label>Age *</Form.Label>
                 <Form.Control
-                  value={newProject.location}
-                  onChange={(event) => setNewProject({ ...newProject, location: event.target.value })}
-                  placeholder="City or region"
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={newPatient.goal}
+                  onChange={(event) => setNewPatient({ ...newPatient, goal: event.target.value })}
+                  placeholder="35"
                 />
               </Col>
-              <Col md={6}>
-                <Form.Label>Category</Form.Label>
+              <Col md={3}>
+                <Form.Label>Gender</Form.Label>
                 <Form.Select
-                  value={newProject.category}
-                  onChange={(event) => setNewProject({ ...newProject, category: event.target.value })}
+                  value={newPatient.progress}
+                  onChange={(event) => setNewPatient({ ...newPatient, progress: event.target.value })}
                 >
-                  {categories.filter((category) => category !== 'All').map((category) => (
-                    <option key={category} value={category}>
-                      {category}
+                  <option value="0">Male</option>
+                  <option value="25">Female</option>
+                  <option value="50">Other</option>
+                  <option value="75">Prefer not to say</option>
+                </Form.Select>
+              </Col>
+              <Col md={6}>
+                <Form.Label>Department *</Form.Label>
+                <Form.Select
+                  value={newPatient.category}
+                  onChange={(event) => setNewPatient({ ...newPatient, category: event.target.value })}
+                >
+                  {departments.filter((d) => d !== 'All').map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept}
                     </option>
                   ))}
                 </Form.Select>
               </Col>
-              <Col md={3}>
-                <Form.Label>Goal (USD) *</Form.Label>
+              <Col md={6}>
+                <Form.Label>Room/Location *</Form.Label>
                 <Form.Control
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={newProject.goal}
-                  onChange={(event) => setNewProject({ ...newProject, goal: event.target.value })}
-                  placeholder="5000"
-                />
-              </Col>
-              <Col md={3}>
-                <Form.Label>Initial Progress (%)</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={newProject.progress}
-                  onChange={(event) => setNewProject({ ...newProject, progress: event.target.value })}
+                  value={newPatient.location}
+                  onChange={(event) => setNewPatient({ ...newPatient, location: event.target.value })}
+                  placeholder="Room 301, Building A"
                 />
               </Col>
               <Col md={12}>
-                <Form.Label>Description *</Form.Label>
+                <Form.Label>Medical Condition / Notes *</Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={3}
-                  value={newProject.description}
-                  onChange={(event) => setNewProject({ ...newProject, description: event.target.value })}
-                  placeholder="Tell people what you are building and why it matters."
+                  value={newPatient.description}
+                  onChange={(event) => setNewPatient({ ...newPatient, description: event.target.value })}
+                  placeholder="Describe patient's condition, symptoms, and reason for visit..."
                 />
               </Col>
             </Row>
             <div className="d-flex flex-column flex-md-row align-items-md-center gap-3 mt-4">
               <Button type="submit" variant="primary" disabled={submitting}>
-                {submitting ? 'Submitting...' : 'Create Project'}
+                {submitting ? 'Registering...' : 'Register Patient'}
               </Button>
               {formError && <span className="text-danger">{formError}</span>}
               {formSuccess && <span className="text-success">{formSuccess}</span>}
@@ -217,6 +216,7 @@ const Projects = () => {
         </Card.Body>
       </Card>
       
+      <h3 className="fw-bold mb-3">Registered Patients</h3>
       <Row className="g-4">
         {loading ? (
           <Col className="text-center">
@@ -224,51 +224,50 @@ const Projects = () => {
               <span className="visually-hidden">Loading...</span>
             </div>
           </Col>
-        ) : filteredProjects.length === 0 ? (
+        ) : filteredPatients.length === 0 ? (
           <Col className="text-center">
             <p className="lead text-muted">
-              No projects found matching your criteria.
+              No patients found matching your criteria.
             </p>
           </Col>
         ) : (
-          filteredProjects.map((project) => (
-            <Col md={4} key={project.id}>
+          filteredPatients.map((patient) => (
+            <Col md={4} key={patient.id}>
               <Card className="h-100">
                 <Card.Body>
-                  <Card.Title className="h5 fw-bold">
-                    {project.title}
-                  </Card.Title>
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <Card.Title className="h5 fw-bold mb-0">
+                      {patient.title}
+                    </Card.Title>
+                    <span className="badge bg-primary">MRN-{String(patient.id).padStart(6, '0')}</span>
+                  </div>
                   <Card.Subtitle className="mb-2 text-muted">
-                    {project.category}
+                    {patient.category}
                   </Card.Subtitle>
                   <Card.Text className="text-muted mb-3">
-                    {project.description.substring(0, 120)}...
+                    Age: {Math.floor(patient.goal)} | {patient.location}
+                  </Card.Text>
+                  <Card.Text className="small text-muted">
+                    {patient.description.substring(0, 100)}...
                   </Card.Text>
                   
                   <div className="mb-3">
                     <div className="d-flex justify-content-between align-items-center">
-                      <span className="text-muted">Goal: {formatCurrency(project.goal)}</span>
-                      <span className="fw-bold">
-                        {project.progress.toFixed(1)}% Funded
-                      </span>
+                      <span className="text-muted small">Treatment Progress</span>
+                      <span className="fw-bold small">{patient.progress.toFixed(0)}%</span>
                     </div>
-                    <div className="progress mt-2" style={{ height: '2px' }}>
+                    <div className="progress mt-2" style={{ height: '4px' }}>
                       <div
                         className="progress-bar bg-success"
                         role="progressbar"
-                        style={{ width: `${project.progress}%` }}
+                        style={{ width: `${patient.progress}%` }}
                       >
                       </div>
                     </div>
                   </div>
                   
-                  <div className="d-flex justify-content-between">
-                    <span className="text-muted">{project.location}</span>
-                    <Button 
-                      variant="outline-primary" 
-                      size="sm" 
-                      href={`/projects/${project.id}`}
-                    >
+                  <div className="d-flex justify-content-end">
+                    <Button variant="outline-primary" size="sm" onClick={() => navigate(`/projects/${patient.id}`)}>
                       View Details
                     </Button>
                   </div>
@@ -278,14 +277,6 @@ const Projects = () => {
           ))
         )}
       </Row>
-      
-      {filteredProjects.length > 0 && (
-        <div className="text-center mt-4">
-          <Button variant="outline-primary" size="lg" href="/projects">
-            View All Projects
-          </Button>
-        </div>
-      )}
     </Container>
   );
 };
